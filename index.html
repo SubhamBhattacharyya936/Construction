@@ -1,0 +1,2623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>STRUCTURA — Heavy Engineering & Architectural Construction</title>
+<meta name="description" content="STRUCTURA is a premier commercial, industrial, and civil infrastructure construction firm. Precision engineering, self-performed structural excellence since 1987.">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   ARCHITECTURAL DESIGN SYSTEM & CSS VARIABLES
+   ============================================================ */
+:root {
+  --bg-primary: #0a0c0e;
+  --bg-secondary: #111417;
+  --bg-card: #161b20;
+  --bg-card-hover: #1c232a;
+  --ink-primary: #f6f5f2;
+  --ink-secondary: #9ea4ab;
+  --ink-muted: #5e6670;
+  
+  --accent: #ff6010;             /* Safety & steel orange */
+  --accent-glow: rgba(255, 96, 16, 0.28);
+  --accent-gold: #ffbe1a;        /* Industrial beacon amber */
+  --hazard-stripe: repeating-linear-gradient(45deg, #1f252c, #1f252c 10px, #ff6010 10px, #ff6010 20px);
+  
+  --grid-line: rgba(255, 255, 255, 0.08);
+  --grid-line-strong: rgba(255, 255, 255, 0.16);
+  --border-subtle: 1px solid rgba(255, 255, 255, 0.08);
+  --border-accent: 1px solid rgba(255, 96, 16, 0.45);
+  
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-sharp: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --pad: clamp(1.5rem, 5vw, 6.5rem);
+  --container-max: 1540px;
+}
+
+/* ============================================================
+   RESET & SYSTEM DEFAULTS
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  overflow-x: hidden;
+  background-color: var(--bg-primary);
+  color: var(--ink-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  position: relative;
+  background: var(--bg-primary);
+  color: var(--ink-primary);
+  line-height: 1.6;
+  font-size: 16px;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); border-left: 1px solid var(--grid-line); }
+::-webkit-scrollbar-thumb { background: #262e36; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::selection { background: var(--accent); color: #000; }
+
+a { color: inherit; text-decoration: none; }
+button, input, select { font: inherit; color: inherit; background: none; border: 0; }
+button { cursor: pointer; }
+img { display: block; max-width: 100%; }
+
+/* Typography Helpers */
+.font-display {
+  font-family: 'Anton', Impact, sans-serif;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-weight: 400;
+  line-height: 0.95;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.01em;
+}
+
+.font-heading {
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+/* ============================================================
+   CUSTOM ARCHITECTURAL CROSSHAIR CURSOR
+   ============================================================ */
+@media (pointer: fine) {
+  body { cursor: default; }
+  .cad-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255, 96, 16, 0.4);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 99999;
+    transition: width 0.25s var(--ease-smooth), height 0.25s var(--ease-smooth), border-color 0.25s;
+    mix-blend-mode: exclusion;
+  }
+  .cad-cursor::before, .cad-cursor::after {
+    content: '';
+    position: absolute;
+    background: var(--accent);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .cad-cursor::before { width: 10px; height: 1.5px; }
+  .cad-cursor::after { width: 1.5px; height: 10px; }
+  .cad-cursor.hover {
+    width: 54px;
+    height: 54px;
+    border-color: var(--accent);
+    background: rgba(255, 96, 16, 0.08);
+  }
+}
+
+/* ============================================================
+   TOP TELEMETRY & PROGRESS BAR
+   ============================================================ */
+.progress-rail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  z-index: 10001;
+}
+.progress-bar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-gold));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  will-change: transform;
+}
+.telemetry-pill {
+  position: fixed;
+  top: 14px;
+  right: var(--pad);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.68rem;
+  letter-spacing: 0.15em;
+  background: rgba(10, 12, 14, 0.85);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--grid-line);
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+}
+.pulse-beacon {
+  width: 7px;
+  height: 7px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #22c55e;
+  animation: pulseBeacon 2s infinite;
+}
+@keyframes pulseBeacon {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.85); }
+}
+
+/* ============================================================
+   NAVIGATION BAR
+   ============================================================ */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem var(--pad);
+  transition: padding 0.4s var(--ease-smooth), background 0.4s var(--ease-smooth), border-color 0.4s;
+  border-bottom: 1px solid transparent;
+}
+.navbar.scrolled {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+  background: rgba(10, 12, 14, 0.82);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-bottom-color: var(--grid-line);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Anton', sans-serif;
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-primary);
+}
+.brand svg {
+  color: var(--accent);
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 10px var(--accent-glow));
+}
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 2.2rem;
+}
+.nav-link {
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  position: relative;
+  padding: 0.4rem 0;
+  transition: color 0.3s;
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s var(--ease-smooth);
+}
+.nav-link:hover { color: var(--ink-primary); }
+.nav-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Primary Button Styling */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0.95rem 1.8rem;
+  background: var(--accent);
+  color: #050708;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid var(--accent);
+  transition: all 0.35s var(--ease-smooth);
+  box-shadow: 0 4px 20px rgba(255, 96, 16, 0.22);
+}
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  z-index: -1;
+  transform: translateY(102%);
+  transition: transform 0.45s var(--ease-smooth);
+}
+.btn-primary:hover {
+  color: #000;
+  border-color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(255, 96, 16, 0.4);
+}
+.btn-primary:hover::before { transform: translateY(0); }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0.95rem 1.8rem;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink-primary);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.35s var(--ease-smooth);
+}
+.btn-outline:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255, 96, 16, 0.06);
+  transform: translateY(-2px);
+}
+
+.mobile-toggle {
+  display: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--grid-line);
+  position: relative;
+  z-index: 10002;
+  border-radius: 2px;
+}
+.mobile-toggle span {
+  position: absolute;
+  left: 50%;
+  width: 20px;
+  height: 2px;
+  background: var(--ink-primary);
+  transform: translateX(-50%);
+  transition: transform 0.4s var(--ease-smooth), opacity 0.3s;
+}
+.mobile-toggle span:first-child { top: 16px; }
+.mobile-toggle span:last-child { top: 26px; }
+body.menu-open .mobile-toggle span:first-child { transform: translateX(-50%) translateY(5px) rotate(45deg); }
+body.menu-open .mobile-toggle span:last-child { transform: translateX(-50%) translateY(-5px) rotate(-45deg); }
+
+.mobile-nav-panel {
+  position: fixed;
+  inset: 0;
+  background: #0d1013;
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--pad);
+  gap: 1.5rem;
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.6s var(--ease-smooth);
+}
+body.menu-open .mobile-nav-panel { clip-path: inset(0 0 0 0); }
+.mobile-nav-panel a {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(2.2rem, 8vw, 4rem);
+  text-transform: uppercase;
+  color: var(--ink-primary);
+  transition: color 0.3s;
+}
+.mobile-nav-panel a:hover { color: var(--accent); }
+
+/* ============================================================
+   HERO SECTION WITH ANIMATED CANVAS & PARALLAX
+   ============================================================ */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 8rem var(--pad) 4.5rem;
+  overflow: hidden;
+  border-bottom: 1px solid var(--grid-line);
+}
+.hero-bg-media {
+  position: absolute;
+  inset: -15% 0;
+  z-index: 0;
+  background: #0e1216 url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=2200&q=80') center/cover no-repeat;
+  filter: grayscale(0.55) brightness(0.38) contrast(1.18);
+  will-change: transform;
+}
+.hero-grid-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.55;
+}
+.hero-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: 
+    radial-gradient(ellipse 90% 70% at 50% 30%, transparent 20%, rgba(10, 12, 14, 0.95) 100%),
+    linear-gradient(180deg, rgba(10, 12, 14, 0.85) 0%, rgba(10, 12, 14, 0.25) 45%, rgba(10, 12, 14, 0.98) 100%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 4;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+.tech-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  background: rgba(255, 190, 26, 0.08);
+  border: 1px solid rgba(255, 190, 26, 0.25);
+  padding: 4px 10px;
+  border-radius: 2px;
+}
+.hero-title {
+  font-size: clamp(3.6rem, 13vw, 12rem);
+  line-height: 0.86;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+.split-line {
+  display: block;
+  overflow: hidden;
+}
+.split-line > span {
+  display: block;
+  transform: translateY(110%);
+  animation: slideUpTitle 1.1s var(--ease-smooth) forwards;
+}
+.split-line:nth-child(1) > span { animation-delay: 0.15s; }
+.split-line:nth-child(2) > span { animation-delay: 0.3s; }
+
+@keyframes slideUpTitle {
+  to { transform: translateY(0); }
+}
+
+.hero-footer-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 2.5rem;
+  align-items: flex-end;
+  padding-top: 2rem;
+  border-top: 1px solid var(--grid-line-strong);
+}
+.hero-lead {
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  color: var(--ink-secondary);
+  font-weight: 300;
+  max-width: 58ch;
+  line-height: 1.65;
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+.sound-toggle-btn {
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--grid-line);
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.sound-toggle-btn:hover {
+  color: var(--ink-primary);
+  border-color: var(--accent);
+}
+
+/* ============================================================
+   DUAL MARQUEE SYSTEM (SAFETY & METRICS)
+   ============================================================ */
+.ticker-wrap {
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--grid-line);
+  user-select: none;
+}
+.ticker-amber {
+  background: var(--accent);
+  color: #0a0c0e;
+  padding: 0.95rem 0;
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(1rem, 2.2vw, 1.6rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ticker-sub {
+  background: #080a0c;
+  color: var(--ink-secondary);
+  padding: 0.65rem 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.22em;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.ticker-inner {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+.ticker-track-left {
+  animation: marqueeLeft 34s linear infinite;
+}
+.ticker-track-right {
+  animation: marqueeRight 40s linear infinite;
+}
+.ticker-segment {
+  display: flex;
+  align-items: center;
+  gap: 2.8rem;
+  padding-right: 2.8rem;
+  white-space: nowrap;
+}
+.ticker-segment i {
+  font-style: normal;
+  color: inherit;
+  opacity: 0.6;
+}
+
+@keyframes marqueeLeft { to { transform: translateX(-50%); } }
+@keyframes marqueeRight { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+
+/* ============================================================
+   GENERAL SECTION FRAMEWORK & REVEALS
+   ============================================================ */
+.section {
+  padding: clamp(5rem, 12vh, 10rem) var(--pad);
+  max-width: var(--container-max);
+  margin: 0 auto;
+  position: relative;
+}
+.section-full {
+  padding: clamp(5rem, 12vh, 10rem) 0;
+  position: relative;
+}
+
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.2rem;
+}
+.section-label::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.section-heading {
+  font-size: clamp(2.4rem, 6.5vw, 5.5rem);
+  text-transform: uppercase;
+  line-height: 0.94;
+  margin-bottom: 2.5rem;
+}
+
+/* Reveal Observer Classes */
+.reveal {
+  opacity: 0;
+  transform: translateY(38px);
+  transition: opacity 0.9s var(--ease-smooth), transform 0.9s var(--ease-smooth);
+  transition-delay: var(--delay, 0s);
+  will-change: opacity, transform;
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================================
+   ABOUT & CAPABILITIES
+   ============================================================ */
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(3rem, 7vw, 7rem);
+  align-items: start;
+}
+.about-statement {
+  font-size: clamp(1.15rem, 2vw, 1.6rem);
+  color: var(--ink-primary);
+  font-weight: 300;
+  line-height: 1.5;
+  margin-bottom: 2rem;
+}
+.about-body {
+  color: var(--ink-secondary);
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.75;
+  margin-bottom: 2.2rem;
+}
+.about-media-box {
+  position: relative;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--grid-line);
+  aspect-ratio: 16/11;
+}
+.about-media-box img {
+  width: 100%;
+  height: 125%;
+  object-fit: cover;
+  filter: grayscale(0.4) contrast(1.1);
+  will-change: transform;
+}
+.cad-annotation {
+  position: absolute;
+  background: rgba(10, 12, 14, 0.88);
+  border: 1px solid var(--accent);
+  padding: 6px 10px;
+  border-radius: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-primary);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+.cad-annotation.top-right { top: 16px; right: 16px; }
+.cad-annotation.bottom-left { bottom: 16px; left: 16px; }
+
+/* Engineering Signature */
+.founder-sig {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  padding-top: 1.8rem;
+  border-top: 1px solid var(--grid-line);
+}
+.founder-meta strong {
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.05rem;
+  color: var(--ink-primary);
+}
+.founder-meta span {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* ============================================================
+   STATS & IMPACT GRID
+   ============================================================ */
+.stats-banner {
+  border-top: 1px solid var(--grid-line);
+  border-bottom: 1px solid var(--grid-line);
+  background: var(--bg-secondary);
+}
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+.stat-cell {
+  padding: clamp(2.5rem, 5vw, 4.2rem) clamp(1.5rem, 3vw, 2.5rem);
+  border-right: 1px solid var(--grid-line);
+  position: relative;
+  overflow: hidden;
+}
+.stat-cell:last-child { border-right: none; }
+.stat-gauge-fill {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1.2s var(--ease-smooth);
+}
+.stat-cell.in-view .stat-gauge-fill { transform: scaleX(1); }
+.stat-big-num {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(2.4rem, 6vw, 4.8rem);
+  line-height: 1;
+  color: var(--ink-primary);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: baseline;
+}
+.stat-metric-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-primary);
+  margin-bottom: 0.35rem;
+}
+.stat-sub {
+  font-size: 0.72rem;
+  color: var(--ink-secondary);
+  line-height: 1.45;
+}
+
+/* ============================================================
+   CORE DISCIPLINES / SERVICES
+   ============================================================ */
+.services-deck {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--grid-line);
+  margin-top: 3rem;
+}
+.service-row {
+  display: grid;
+  grid-template-columns: 80px 1.4fr 1.6fr 60px;
+  align-items: center;
+  gap: 2rem;
+  padding: clamp(1.8rem, 3.6vw, 2.8rem) 1rem;
+  border-bottom: 1px solid var(--grid-line);
+  position: relative;
+  isolation: isolate;
+  transition: all 0.45s var(--ease-smooth);
+  cursor: pointer;
+}
+.service-row::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgba(255, 96, 16, 0.12), transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--ease-smooth);
+}
+.service-row:hover::before { transform: scaleX(1); }
+.service-row:hover { padding-left: 2rem; }
+.service-row:hover .service-name { color: var(--accent); }
+.service-row:hover .service-arrow { transform: translate(6px, -6px); color: var(--accent); }
+
+.service-idx {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+.service-name {
+  font-size: clamp(1.4rem, 2.8vw, 2.4rem);
+  font-family: 'Anton', sans-serif;
+  letter-spacing: 0.02em;
+  transition: color 0.3s;
+}
+.service-desc {
+  font-size: 0.94rem;
+  color: var(--ink-secondary);
+  font-weight: 300;
+  max-width: 46ch;
+}
+.service-arrow {
+  font-size: 1.6rem;
+  color: var(--ink-muted);
+  transition: transform 0.4s var(--ease-smooth), color 0.3s;
+}
+
+/* ============================================================
+   INTERACTIVE BEFORE & AFTER SLIDER
+   ============================================================ */
+.comparison-section {
+  background: #080a0c;
+  border-top: 1px solid var(--grid-line);
+  border-bottom: 1px solid var(--grid-line);
+}
+.comparison-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  max-height: 680px;
+  overflow: hidden;
+  border: 1px solid var(--grid-line-strong);
+  border-radius: 3px;
+  user-select: none;
+  cursor: ew-resize;
+  background: #000;
+}
+.compare-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.compare-layer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+.compare-before {
+  z-index: 1;
+}
+.compare-after {
+  z-index: 2;
+  clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+  will-change: clip-path;
+}
+.compare-divider-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 3px;
+  background: var(--accent);
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 0 15px rgba(255, 96, 16, 0.7);
+  transform: translateX(-50%);
+  will-change: left;
+}
+.divider-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #0a0c0e;
+  border: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 1.1rem;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+}
+.compare-badge {
+  position: absolute;
+  top: 20px;
+  z-index: 5;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  padding: 6px 14px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  background: rgba(10, 12, 14, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--grid-line);
+}
+.compare-badge.left { left: 20px; }
+.compare-badge.right { right: 20px; border-color: rgba(255, 96, 16, 0.4); color: var(--accent); }
+
+/* ============================================================
+   HORIZONTAL PINNED PROJECTS GALLERY
+   ============================================================ */
+.projects-pinned-wrap {
+  position: relative;
+  background: var(--bg-primary);
+}
+.projects-sticky-view {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  padding: 5rem 0 3rem;
+}
+.projects-header-bar {
+  padding: 0 var(--pad);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: clamp(1.5rem, 3.5vh, 3rem);
+}
+.project-filters {
+  display: flex;
+  gap: 8px;
+}
+.filter-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border: 1px solid var(--grid-line);
+  color: var(--ink-secondary);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+.filter-btn.active, .filter-btn:hover {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+
+.projects-track {
+  display: flex;
+  gap: clamp(1.5rem, 3vw, 2.8rem);
+  padding: 0 var(--pad);
+  width: max-content;
+  will-change: transform;
+}
+.project-card {
+  flex: 0 0 auto;
+  width: clamp(280px, 32vw, 440px);
+  cursor: pointer;
+  position: relative;
+}
+.project-thumb {
+  position: relative;
+  aspect-ratio: 3/4;
+  max-height: 54vh;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--bg-card);
+  border: 1px solid var(--grid-line);
+}
+.project-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(0.55) brightness(0.85);
+  transition: transform 1.2s var(--ease-smooth), filter 0.6s;
+}
+.project-card:hover .project-thumb img {
+  transform: scale(1.08);
+  filter: grayscale(0) brightness(1);
+}
+.project-card:hover .project-thumb::after {
+  opacity: 1;
+}
+.project-thumb::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(10, 12, 14, 0.85));
+  opacity: 0.4;
+  transition: opacity 0.4s;
+}
+.project-floating-spec {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  background: rgba(10, 12, 14, 0.8);
+  padding: 4px 8px;
+  border: 1px solid var(--grid-line);
+  border-radius: 2px;
+  color: var(--ink-primary);
+}
+.project-info {
+  margin-top: 1.1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--grid-line);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.project-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.project-category {
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ============================================================
+   INTERACTIVE COST & TIMELINE CALCULATOR
+   ============================================================ */
+.estimator-card {
+  background: var(--bg-card);
+  border: 1px solid var(--grid-line-strong);
+  border-radius: 3px;
+  padding: clamp(2rem, 5vw, 4rem);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: clamp(2rem, 5vw, 4.5rem);
+}
+.estimator-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.control-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-secondary);
+  font-family: 'Space Grotesk', sans-serif;
+}
+.control-val-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+.range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #232a31;
+  border-radius: 3px;
+  outline: none;
+}
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 12px var(--accent);
+  border: 2px solid #000;
+}
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.type-btn {
+  padding: 12px;
+  border: 1px solid var(--grid-line);
+  background: var(--bg-secondary);
+  border-radius: 2px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.type-btn strong {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+}
+.type-btn span {
+  font-size: 0.68rem;
+  color: var(--ink-muted);
+}
+.type-btn.active {
+  border-color: var(--accent);
+  background: rgba(255, 96, 16, 0.08);
+}
+.type-btn.active strong { color: var(--accent); }
+
+.estimator-output {
+  background: var(--bg-secondary);
+  border: 1px solid var(--grid-line);
+  padding: clamp(1.8rem, 3.5vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 2px;
+  position: relative;
+}
+.output-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+.output-cost-range {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(2.4rem, 5vw, 3.8rem);
+  color: var(--accent-gold);
+  line-height: 1;
+  margin: 1.2rem 0;
+}
+.output-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+  padding: 1.4rem 0;
+  border-top: 1px solid var(--grid-line);
+  border-bottom: 1px solid var(--grid-line);
+  margin-bottom: 1.8rem;
+}
+.metric-pair span {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  letter-spacing: 0.1em;
+}
+.metric-pair strong {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.05rem;
+  color: var(--ink-primary);
+}
+
+/* ============================================================
+   EXECUTION TIMELINE & LASER PROGRESS RAIL
+   ============================================================ */
+.process-container {
+  position: relative;
+  padding-left: clamp(2.5rem, 6vw, 5rem);
+  margin-top: 3.5rem;
+}
+.process-laser-track {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--grid-line);
+}
+.process-laser-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, var(--accent), var(--accent-gold));
+  transform: scaleY(0);
+  transform-origin: top;
+  will-change: transform;
+}
+.process-step {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 2rem;
+  padding: clamp(2rem, 4vw, 3.2rem) 0;
+  border-bottom: 1px solid var(--grid-line);
+  position: relative;
+}
+.process-step:last-child { border-bottom: none; }
+.step-number {
+  font-family: 'Anton', sans-serif;
+  font-size: 1.8rem;
+  color: var(--accent);
+}
+.step-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.25rem, 2.6vw, 1.9rem);
+  margin-bottom: 0.6rem;
+}
+.step-desc {
+  font-size: 0.95rem;
+  color: var(--ink-secondary);
+  font-weight: 300;
+  max-width: 60ch;
+  line-height: 1.7;
+}
+
+/* ============================================================
+   MODAL & PROJECT DETAIL DRAWER
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 12, 0.85);
+  backdrop-filter: blur(16px);
+  z-index: 10005;
+  display: grid;
+  place-items: center;
+  padding: var(--pad);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s var(--ease-smooth);
+}
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal-window {
+  background: var(--bg-card);
+  border: 1px solid var(--grid-line-strong);
+  border-radius: 4px;
+  max-width: 780px;
+  width: 100%;
+  padding: clamp(2rem, 4vw, 3.5rem);
+  position: relative;
+  transform: translateY(30px);
+  transition: transform 0.4s var(--ease-smooth);
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8);
+}
+.modal-overlay.active .modal-window {
+  transform: translateY(0);
+}
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--grid-line);
+  display: grid;
+  place-items: center;
+  color: var(--ink-secondary);
+  font-size: 1.2rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.modal-close:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ============================================================
+   CALL TO ACTION & QUOTE REQUEST
+   ============================================================ */
+.cta-block {
+  position: relative;
+  background: #080a0c;
+  overflow: hidden;
+  border-top: 1px solid var(--grid-line);
+  padding: clamp(6rem, 16vh, 12rem) var(--pad);
+}
+.cta-bg-parallax {
+  position: absolute;
+  inset: -20% 0;
+  background: url('https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=2200&q=80') center/cover no-repeat;
+  filter: grayscale(0.7) brightness(0.24) contrast(1.2);
+  z-index: 0;
+  will-change: transform;
+}
+.cta-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+.cta-title {
+  font-size: clamp(2.8rem, 8vw, 6.5rem);
+  line-height: 0.92;
+  margin-bottom: 2rem;
+}
+.cta-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 2.5rem;
+}
+.cta-input {
+  background: rgba(10, 12, 14, 0.7);
+  border: 1px solid var(--grid-line-strong);
+  padding: 1rem 1.6rem;
+  color: var(--ink-primary);
+  font-size: 0.95rem;
+  border-radius: 2px;
+  min-width: 320px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.cta-input:focus { border-color: var(--accent); }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.footer {
+  background: #060809;
+  border-top: 1px solid var(--grid-line);
+  padding: clamp(4rem, 9vh, 6.5rem) var(--pad) 2rem;
+  font-size: 0.9rem;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: clamp(2.5rem, 5vw, 4rem);
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+.footer-brand p {
+  color: var(--ink-secondary);
+  font-weight: 300;
+  margin-top: 1.4rem;
+  max-width: 38ch;
+  line-height: 1.7;
+}
+.footer-col h4 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.74rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.4rem;
+}
+.footer-col ul { list-style: none; }
+.footer-col li { margin-bottom: 0.8rem; }
+.footer-col a {
+  color: var(--ink-secondary);
+  font-weight: 300;
+  transition: color 0.3s, padding-left 0.3s;
+}
+.footer-col a:hover { color: var(--ink-primary); padding-left: 6px; }
+
+.footer-bottom {
+  max-width: var(--container-max);
+  margin: clamp(3rem, 6vh, 5rem) auto 0;
+  padding-top: 1.8rem;
+  border-top: 1px solid var(--grid-line);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.2rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   RESPONSIVE DESIGN RULES
+   ============================================================ */
+@media (max-width: 1024px) {
+  .about-grid { grid-template-columns: 1fr; }
+  .stats-container { grid-template-columns: repeat(2, 1fr); }
+  .stat-cell:nth-child(2) { border-right: none; }
+  .stat-cell:nth-child(1), .stat-cell:nth-child(2) { border-bottom: 1px solid var(--grid-line); }
+  .estimator-card { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 900px) {
+  .nav-menu, .navbar .btn-primary { display: none; }
+  .mobile-toggle { display: block; }
+  .hero-footer-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+  .hero-actions { justify-content: flex-start; }
+  
+  /* On mobile: horizontal slider switches to smooth native touch snap carousel */
+  .projects-pinned-wrap { height: auto !important; }
+  .projects-sticky-view {
+    position: static;
+    height: auto;
+    padding: clamp(3rem, 8vh, 5rem) 0;
+  }
+  .projects-track {
+    width: auto;
+    transform: none !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 1.5rem;
+    scrollbar-width: none;
+  }
+  .projects-track::-webkit-scrollbar { display: none; }
+  .project-card {
+    width: min(80vw, 360px);
+    scroll-snap-align: start;
+  }
+  .service-row {
+    grid-template-columns: 40px 1fr;
+    row-gap: 0.5rem;
+  }
+  .service-desc { grid-column: 2; }
+  .service-arrow { display: none; }
+}
+
+@media (max-width: 600px) {
+  .stats-container { grid-template-columns: 1fr; }
+  .stat-cell { border-right: none; border-bottom: 1px solid var(--grid-line); }
+  .stat-cell:last-child { border-bottom: none; }
+  .cta-input { min-width: 100%; }
+  .footer-grid { grid-template-columns: 1fr; }
+}
+
+/* Reduced Motion Mode */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal { opacity: 1 !important; transform: none !important; }
+  .split-line > span { transform: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- PRECISION CAD CROSSHAIR CURSOR (Desktop) -->
+<div class="cad-cursor" id="cadCursor" aria-hidden="true"></div>
+
+<!-- TOP PROGRESS & LIVE METRICS PILL -->
+<div class="progress-rail" aria-hidden="true">
+  <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div class="telemetry-pill">
+  <span class="pulse-beacon"></span>
+  <span id="siteStatusText">14 SITES ACTIVE • ZERO LTI</span>
+  <span style="color:var(--accent);" id="scrollPercent">0%</span>
+</div>
+
+<!-- MAIN NAVIGATION -->
+<header class="navbar" id="navbar">
+  <a href="#hero" class="brand" aria-label="Structura Home">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 22V9l10-7 10 7v13"/>
+      <path d="M9 22V12h6v10"/>
+      <path d="M2 12h20"/>
+    </svg>
+    <span>STRUCTURA</span>
+  </a>
+
+  <nav class="nav-menu">
+    <a href="#about" class="nav-link">About</a>
+    <a href="#services" class="nav-link">Disciplines</a>
+    <a href="#comparison" class="nav-link">Before/After</a>
+    <a href="#projects" class="nav-link">Masterworks</a>
+    <a href="#estimator" class="nav-link">Cost Calculator</a>
+    <a href="#process" class="nav-link">Execution</a>
+  </nav>
+
+  <a href="#contact" class="btn-primary">
+    <span>Request Pre-Con Bid</span>
+    <span style="font-size:1.1em">→</span>
+  </a>
+
+  <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle navigation menu" aria-expanded="false">
+    <span></span>
+    <span></span>
+  </button>
+</header>
+
+<!-- MOBILE NAVIGATION DRAWER -->
+<div class="mobile-nav-panel" id="mobileNav">
+  <a href="#about" class="mobile-link">About</a>
+  <a href="#services" class="mobile-link">Disciplines</a>
+  <a href="#comparison" class="mobile-link">Before &amp; After</a>
+  <a href="#projects" class="mobile-link">Projects</a>
+  <a href="#estimator" class="mobile-link">Calculator</a>
+  <a href="#process" class="mobile-link">Process</a>
+  <a href="#contact" class="mobile-link">Contact</a>
+</div>
+
+<!-- ============================================================
+     HERO SECTION
+     ============================================================ -->
+<section class="hero" id="hero">
+  <div class="hero-bg-media" data-parallax="0.32" id="heroBg"></div>
+  <canvas class="hero-grid-canvas" id="heroGridCanvas"></canvas>
+  <div class="hero-vignette"></div>
+
+  <div class="hero-content">
+    <div class="badge-row">
+      <span class="tech-tag font-mono">SPEC: HEAVY COMMERCIAL // ISO-9001</span>
+      <span class="tech-tag font-mono">LAT 40.7128° N • ELEV +142M</span>
+      <button class="sound-toggle-btn font-mono" id="soundToggle" title="Toggle architectural feedback audio">
+        <span id="soundIcon">🔇</span> <span id="soundLabel">SOUND: MUTED</span>
+      </button>
+    </div>
+
+    <h1 class="hero-title font-display">
+      <span class="split-line"><span>WE FORGE</span></span>
+      <span class="split-line"><span>WHAT <em>ENDURES</em></span></span>
+    </h1>
+
+    <div class="hero-footer-grid">
+      <p class="hero-lead">
+        From deep subterranean caissons to sixty-story structural steel crowns — STRUCTURA executes commercial, industrial, and civic landmarks with millimeter precision.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#projects" class="btn-primary">Explore Masterworks <span>→</span></a>
+        <a href="#estimator" class="btn-outline">Calculate Cost <span>↗</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     DUAL TELEMETRY MARQUEE
+     ============================================================ -->
+<div class="ticker-wrap" aria-hidden="true">
+  <div class="ticker-amber">
+    <div class="ticker-inner ticker-track-left">
+      <div class="ticker-segment">
+        <span>COMMERCIAL SKYSCRAPERS</span><i>◆</i>
+        <span>CIVIL INFRASTRUCTURE</span><i>◆</i>
+        <span>ADVANCED MANUFACTURING</span><i>◆</i>
+        <span>DEEP FOUNDATIONS</span><i>◆</i>
+        <span>SEISMIC RETROFITS</span><i>◆</i>
+        <span>MASS TIMBER STRUCTURES</span><i>◆</i>
+      </div>
+      <div class="ticker-segment">
+        <span>COMMERCIAL SKYSCRAPERS</span><i>◆</i>
+        <span>CIVIL INFRASTRUCTURE</span><i>◆</i>
+        <span>ADVANCED MANUFACTURING</span><i>◆</i>
+        <span>DEEP FOUNDATIONS</span><i>◆</i>
+        <span>SEISMIC RETROFITS</span><i>◆</i>
+        <span>MASS TIMBER STRUCTURES</span><i>◆</i>
+      </div>
+    </div>
+  </div>
+
+  <div class="ticker-sub">
+    <div class="ticker-inner ticker-track-right">
+      <div class="ticker-segment">
+        <span>$3.2B TOTAL ASSETS DELIVERED</span><i>//</i>
+        <span>1,420 PROJECTS ACROSS 14 METROS</span><i>//</i>
+        <span>SAFETY RECORD: 0.00 LOST TIME INCIDENT RATE</span><i>//</i>
+        <span>ENR TOP 50 GENERAL CONTRACTORS 2025</span><i>//</i>
+        <span>SELF-PERFORMED CONCRETE &amp; STEEL DIVISION</span><i>//</i>
+      </div>
+      <div class="ticker-segment">
+        <span>$3.2B TOTAL ASSETS DELIVERED</span><i>//</i>
+        <span>1,420 PROJECTS ACROSS 14 METROS</span><i>//</i>
+        <span>SAFETY RECORD: 0.00 LOST TIME INCIDENT RATE</span><i>//</i>
+        <span>ENR TOP 50 GENERAL CONTRACTORS 2025</span><i>//</i>
+        <span>SELF-PERFORMED CONCRETE &amp; STEEL DIVISION</span><i>//</i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SECTION 01: ABOUT & CAPABILITY MANIFESTO
+     ============================================================ -->
+<section class="section" id="about">
+  <div class="about-grid">
+    <div>
+      <p class="section-label reveal">01 // STRUCTURAL PHILOSOPHY</p>
+      <h2 class="section-heading font-display reveal" style="--delay:0.1s">
+        THIRTY-EIGHT YEARS OF <em>UNCOMPROMISING</em> STEEL &amp; STONE.
+      </h2>
+      <p class="about-statement reveal" style="--delay:0.18s">
+        We do not sub-contract our responsibility. We self-perform deep excavation, post-tensioned concrete, and structural erection to safeguard your deadline and balance sheet.
+      </p>
+      <p class="about-body reveal" style="--delay:0.25s">
+        Founded in 1987 by master civil engineers, STRUCTURA has grown into a multi-billion dollar general contracting force. Operating across North America and Europe, our teams combine generative Building Information Modeling (BIM 5D) with the raw craftsmanship of over 1,200 on-site tradespeople.
+      </p>
+
+      <div class="founder-sig reveal" style="--delay:0.32s">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+        <div class="founder-meta">
+          <strong>Julian Vance, P.E.</strong>
+          <span>Chief Executive &amp; Founding Civil Engineer</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-media-box reveal" style="--delay:0.2s">
+      <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1600&q=80" 
+           alt="Structural engineers reviewing blueprint drawings on active tower site" 
+           data-parallax="0.12" 
+           loading="lazy">
+      <div class="cad-annotation top-right">SECTOR: SKYLINE QUAD A-4</div>
+      <div class="cad-annotation bottom-left">TOLERANCE: &plusmn;1.5MM PER STOREY</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     LIVE PERFORMANCE STATS BANNER
+     ============================================================ -->
+<div class="stats-banner">
+  <div class="stats-container">
+    <div class="stat-cell reveal">
+      <div class="stat-gauge-fill"></div>
+      <div class="stat-big-num font-display">
+        <span data-target="38">0</span><span>+</span>
+      </div>
+      <div class="stat-metric-label">Years of Excellence</div>
+      <p class="stat-sub">Established 1987 in heavy industrial infrastructure.</p>
+    </div>
+
+    <div class="stat-cell reveal" style="--delay:0.1s">
+      <div class="stat-gauge-fill"></div>
+      <div class="stat-big-num font-display">
+        <span data-target="1420">0</span><span>+</span>
+      </div>
+      <div class="stat-metric-label">Completed Landmarks</div>
+      <p class="stat-sub">Commercial towers, logistics hubs, and civil bridges.</p>
+    </div>
+
+    <div class="stat-cell reveal" style="--delay:0.2s">
+      <div class="stat-gauge-fill"></div>
+      <div class="stat-big-num font-display">
+        <span data-target="99">0</span><span>.8%</span>
+      </div>
+      <div class="stat-metric-label">On-Time Delivery</div>
+      <p class="stat-sub">Strict critical-path tracking and weather hedging.</p>
+    </div>
+
+    <div class="stat-cell reveal" style="--delay:0.3s">
+      <div class="stat-gauge-fill"></div>
+      <div class="stat-big-num font-display">
+        <span data-target="0">0</span><span>.00</span>
+      </div>
+      <div class="stat-metric-label">OSHA Lost-Time Incident</div>
+      <p class="stat-sub">Over 4.8 million man-hours without a safety violation.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SECTION 02: CORE DISCIPLINES
+     ============================================================ -->
+<section class="section" id="services">
+  <p class="section-label reveal">02 // CORE DISCIPLINES</p>
+  <h2 class="section-heading font-display reveal" style="--delay:0.1s">
+    ENGINEERED FOR <em>MAXIMUM SCALE</em>
+  </h2>
+
+  <div class="services-deck">
+    <div class="service-row reveal" data-modal="commercial">
+      <span class="service-idx">01</span>
+      <h3 class="service-name">High-Rise &amp; Commercial</h3>
+      <p class="service-desc">Architectural glass and steel skyscrapers, modern corporate headquarters, and mixed-use transit-oriented towers built to LEED Platinum standards.</p>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <div class="service-row reveal" style="--delay:0.08s" data-modal="industrial">
+      <span class="service-idx">02</span>
+      <h3 class="service-name">Mega-Logistics &amp; Industrial</h3>
+      <p class="service-desc">Pre-engineered superstructures, automated distribution fulfillment centers with super-flat laser screeded floors, and automated cold-storage facilities.</p>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <div class="service-row reveal" style="--delay:0.16s" data-modal="civil">
+      <span class="service-idx">03</span>
+      <h3 class="service-name">Civil &amp; Heavy Infrastructure</h3>
+      <p class="service-desc">Multi-span viaducts, tunnel excavations, storm resilience systems, and municipal water management infrastructure engineered for 100-year lifespans.</p>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <div class="service-row reveal" style="--delay:0.24s" data-modal="timber">
+      <span class="service-idx">04</span>
+      <h3 class="service-name">Mass Timber &amp; Green Architecture</h3>
+      <p class="service-desc">Cross-laminated timber (CLT) and glulam hybrid construction delivering carbon-sequestered, fire-rated architectural marvels with rapid on-site assembly.</p>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <div class="service-row reveal" style="--delay:0.32s" data-modal="seismic">
+      <span class="service-idx">05</span>
+      <h3 class="service-name">Adaptive Reuse &amp; Seismic Retrofit</h3>
+      <p class="service-desc">Complex structural underpinning, historic masonry preservation, tuned mass damper installation, and structural reinforcement of occupied high-value spaces.</p>
+      <span class="service-arrow">↗</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 03: INTERACTIVE BEFORE & AFTER SLIDER
+     ============================================================ -->
+<div class="comparison-section section-full" id="comparison">
+  <div style="max-width:var(--container-max);margin:0 auto;padding:0 var(--pad);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <p class="section-label reveal">03 // TRANSFORMATION INSPECTOR</p>
+        <h2 class="section-heading font-display reveal" style="margin-bottom:0.5rem;--delay:0.1s">
+          FROM BEDROCK TO <em>THE CLOUDS</em>
+        </h2>
+        <p style="color:var(--ink-secondary);font-size:0.95rem;" class="reveal" style="--delay:0.15s">
+          Drag the laser slider horizontally to inspect excavation foundation vs. completed 54-story superstructure.
+        </p>
+      </div>
+      <span class="tech-tag font-mono reveal">DRAG TO INSPECT // CAD OVERLAY</span>
+    </div>
+
+    <div class="comparison-box reveal" id="compareBox" style="--delay:0.2s">
+      <!-- BEFORE LAYER (Excavation Groundwork) -->
+      <div class="compare-layer compare-before">
+        <img src="https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?auto=format&fit=crop&w=1920&q=80" alt="Subterranean foundation and piling stage">
+        <span class="compare-badge left">STAGE 01 // SUBSTRUCTURE PILING</span>
+      </div>
+
+      <!-- AFTER LAYER (Finished Tower) -->
+      <div class="compare-layer compare-after" id="compareAfter">
+        <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80" alt="Completed modern high-rise skyscraper">
+        <span class="compare-badge right">STAGE 04 // COMPLETED HANDOVER</span>
+      </div>
+
+      <!-- SLIDER HANDLE -->
+      <div class="compare-divider-handle" id="compareHandle">
+        <div class="divider-circle">↔</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SECTION 04: HORIZONTAL PINNED PROJECTS GALLERY
+     ============================================================ -->
+<div class="projects-pinned-wrap" id="projects">
+  <div class="projects-sticky-view">
+    <div class="projects-header-bar">
+      <div>
+        <p class="section-label">04 // SELECTED MASTERWORKS</p>
+        <h2 class="section-heading font-display" style="margin-bottom:0">PROJECT <em>PORTFOLIO</em></h2>
+      </div>
+
+      <div class="project-filters">
+        <button class="filter-btn active" data-filter="all">ALL (6)</button>
+        <button class="filter-btn" data-filter="commercial">COMMERCIAL</button>
+        <button class="filter-btn" data-filter="industrial">INDUSTRIAL</button>
+        <button class="filter-btn" data-filter="residential">RESIDENTIAL</button>
+      </div>
+    </div>
+
+    <!-- HORIZONTAL SCROLLING TRACK -->
+    <div class="projects-track" id="projectsTrack">
+      <article class="project-card" data-category="commercial" data-title="The Obsidian Spire" data-cost="$420M" data-area="850,000 SQ FT" data-city="Seattle, WA">
+        <div class="project-thumb">
+          <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1000&q=80" alt="The Obsidian Spire commercial tower" loading="lazy">
+          <span class="project-floating-spec">58 STOREYS // 2024</span>
+        </div>
+        <div class="project-info">
+          <div>
+            <h3 class="project-name">The Obsidian Spire</h3>
+            <span class="project-category">Commercial High-Rise</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--accent-gold);font-size:0.85rem;">$420M</span>
+        </div>
+      </article>
+
+      <article class="project-card" data-category="residential" data-title="Kallio Maritime Residences" data-cost="$185M" data-area="320,000 SQ FT" data-city="Vancouver, BC">
+        <div class="project-thumb">
+          <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=80" alt="Kallio Maritime luxury waterfront apartments" loading="lazy">
+          <span class="project-floating-spec">WATERFRONT // 2023</span>
+        </div>
+        <div class="project-info">
+          <div>
+            <h3 class="project-name">Kallio Maritime</h3>
+            <span class="project-category">Luxury Residential</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--accent-gold);font-size:0.85rem;">$185M</span>
+        </div>
+      </article>
+
+      <article class="project-card" data-category="industrial" data-title="AeroHub Logistics Center" data-cost="$290M" data-area="1,400,000 SQ FT" data-city="Dallas, TX">
+        <div class="project-thumb">
+          <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1000&q=80" alt="AeroHub automated logistics hub" loading="lazy">
+          <span class="project-floating-spec">AUTOMATED // 2024</span>
+        </div>
+        <div class="project-info">
+          <div>
+            <h3 class="project-name">AeroHub Logistics</h3>
+            <span class="project-category">Industrial Hub</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--accent-gold);font-size:0.85rem;">$290M</span>
+        </div>
+      </article>
+
+      <article class="project-card" data-category="commercial" data-title="Helix Biotech Campus" data-cost="$510M" data-area="920,000 SQ FT" data-city="Boston, MA">
+        <div class="project-thumb">
+          <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1000&q=80" alt="Helix Biotech Campus lab complex" loading="lazy">
+          <span class="project-floating-spec">BSL-3 LABS // 2023</span>
+        </div>
+        <div class="project-info">
+          <div>
+            <h3 class="project-name">Helix Biotech Campus</h3>
+            <span class="project-category">Life Sciences</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--accent-gold);font-size:0.85rem;">$510M</span>
+        </div>
+      </article>
+
+      <article class="project-card" data-category="commercial" data-title="Aurora Civic Cultural Hall" data-cost="$140M" data-area="210,000 SQ FT" data-city="Denver, CO">
+        <div class="project-thumb">
+          <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1000&q=80" alt="Aurora Civic Cultural Hall suspension roof" loading="lazy">
+          <span class="project-floating-spec">CIVIC // 2022</span>
+        </div>
+        <div class="project-info">
+          <div>
+            <h3 class="project-name">Aurora Cultural Hall</h3>
+            <span class="project-category">Civic Infrastructure</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--accent-gold);font-size:0.85rem;">$140M</span>
+        </div>
+      </article>
+
+      <article class="project-card" data-category="industrial" data-title="Vulcan Advanced Fabrication" data-cost="$330M" data-area="750,000 SQ FT" data-city="Pittsburgh, PA">
+        <div class="project-thumb">
+          <img src="https://images.unsplash.com/photo-1531834685032-c34bf0d84c77?auto=format&fit=crop&w=1000&q=80" alt="Vulcan Advanced Fabrication factory" loading="lazy">
+          <span class="project-floating-spec">HEAVY PLANT // 2023</span>
+        </div>
+        <div class="project-info">
+          <div>
+            <h3 class="project-name">Vulcan Heavy Plant</h3>
+            <span class="project-category">Industrial Manufacturing</span>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--accent-gold);font-size:0.85rem;">$330M</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SECTION 05: INTERACTIVE PROJECT COST & TIMELINE CALCULATOR
+     ============================================================ -->
+<section class="section" id="estimator">
+  <p class="section-label reveal">05 // INSTANT FEASIBILITY ENGINE</p>
+  <h2 class="section-heading font-display reveal" style="--delay:0.1s">
+    ESTIMATE YOUR <em>PROJECT CAPITAL</em>
+  </h2>
+
+  <div class="estimator-card reveal" style="--delay:0.18s">
+    <div class="estimator-controls">
+      <div class="control-group">
+        <div class="control-header">
+          <label class="control-label">01. Asset Typology</label>
+        </div>
+        <div class="type-grid">
+          <button class="type-btn active" data-type="commercial" data-rate="380">
+            <strong>Commercial Tower</strong>
+            <span>Grade-A Office / Mixed Use</span>
+          </button>
+          <button class="type-btn" data-type="industrial" data-rate="210">
+            <strong>Industrial Hub</strong>
+            <span>Automated Logistics / Plant</span>
+          </button>
+          <button class="type-btn" data-type="residential" data-rate="320">
+            <strong>Multi-Family Luxury</strong>
+            <span>High-Density Residential</span>
+          </button>
+          <button class="type-btn" data-type="civil" data-rate="450">
+            <strong>Civil / Life Sciences</strong>
+            <span>Cleanroom / Complex Site</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-header">
+          <label class="control-label" for="areaSlider">02. Gross Floor Area (GFA)</label>
+          <span class="control-val-badge" id="areaDisplay">150,000 SQ FT</span>
+        </div>
+        <input type="range" min="20000" max="800000" step="10000" value="150000" class="range-slider" id="areaSlider">
+      </div>
+
+      <div class="control-group">
+        <div class="control-header">
+          <label class="control-label" for="speedSlider">03. Project Velocity Schedule</label>
+          <span class="control-val-badge" id="speedDisplay">Fast-Track (Optimized)</span>
+        </div>
+        <input type="range" min="1" max="3" step="1" value="2" class="range-slider" id="speedSlider">
+      </div>
+    </div>
+
+    <!-- CALCULATOR OUTPUT PANEL -->
+    <div class="estimator-output">
+      <div>
+        <span class="output-title">ESTIMATED CAPITAL EXPENDITURE (CLASS 4)</span>
+        <div class="output-cost-range" id="costOutput">$57.0M – $65.5M</div>
+        <p style="font-size:0.8rem;color:var(--ink-secondary);line-height:1.5;">
+          Includes sub-structure, core &amp; shell, mechanical risers, and contractor contingency. Excludes soft architectural fees and land acquisition.
+        </p>
+      </div>
+
+      <div class="output-metrics">
+        <div class="metric-pair">
+          <span>PROJECTED DURATION</span>
+          <strong id="durationOutput">22 MONTHS</strong>
+        </div>
+        <div class="metric-pair">
+          <span>PEAK SITE CREW</span>
+          <strong id="crewOutput">240 TRADES</strong>
+        </div>
+        <div class="metric-pair">
+          <span>EST. STRUCTURAL STEEL</span>
+          <strong id="steelOutput">4,200 TONS</strong>
+        </div>
+        <div class="metric-pair">
+          <span>CONCRETE PLACEMENT</span>
+          <strong id="concreteOutput">18,500 CU YD</strong>
+        </div>
+      </div>
+
+      <a href="#contact" class="btn-primary" style="width:100%;">
+        Lock In Pre-Con Consultation <span>→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 06: EXECUTION TIMELINE & LASER PROGRESS RAIL
+     ============================================================ -->
+<section class="section" id="process">
+  <p class="section-label reveal">06 // THE STRUCTURA PROTOCOL</p>
+  <h2 class="section-heading font-display reveal" style="--delay:0.1s">
+    ZERO-DEFECT <em>EXECUTION</em>
+  </h2>
+
+  <div class="process-container" id="processWrap">
+    <div class="process-laser-track">
+      <div class="process-laser-fill" id="processFill"></div>
+    </div>
+
+    <div class="process-step reveal">
+      <span class="step-number">PHASE 01</span>
+      <div>
+        <h3 class="step-title">Geotechnical &amp; 5D BIM Coordination</h3>
+        <p class="step-desc">
+          Borehole soil sonic testing, structural loading clash detection in 5D BIM, and procurement of long-lead substation transformers and high-tensile rebar before initial groundbreaking.
+        </p>
+      </div>
+    </div>
+
+    <div class="process-step reveal" style="--delay:0.1s">
+      <span class="step-number">PHASE 02</span>
+      <div>
+        <h3 class="step-title">Substructure &amp; Deep Foundations</h3>
+        <p class="step-desc">
+          Secant piling, continuous flight auger (CFA) caissons anchored into bedrock, slurry wall retention, and mass concrete base slab pours monitored via wireless thermal sensors.
+        </p>
+      </div>
+    </div>
+
+    <div class="process-step reveal" style="--delay:0.2s">
+      <span class="step-number">PHASE 03</span>
+      <div>
+        <h3 class="step-title">Superstructure &amp; Envelope Enclosure</h3>
+        <p class="step-desc">
+          Self-performed slipform cores, structural steel erection utilizing twin high-capacity luffing jib tower cranes, and robotic curtain-wall facade bracket installation at 3-day cycle rates.
+        </p>
+      </div>
+    </div>
+
+    <div class="process-step reveal" style="--delay:0.3s">
+      <span class="step-number">PHASE 04</span>
+      <div>
+        <h3 class="step-title">Commissioning &amp; Handover Guarantee</h3>
+        <p class="step-desc">
+          Full MEP integrated systems pressure testing, acoustic certification, air leakage thermal imaging, digital BIM as-built twin delivery, and our standard 24-month structural warranty.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 07: CALL TO ACTION & PROJECT BRIEFING
+     ============================================================ -->
+<section class="cta-block" id="contact">
+  <div class="cta-bg-parallax" data-parallax="0.22"></div>
+  <div class="cta-inner">
+    <p class="section-label reveal" style="justify-content:center;">07 // CONTRACTOR ENGAGEMENT</p>
+    <h2 class="cta-title font-display reveal" style="--delay:0.1s">
+      LET'S BUILD SOMETHING <em>MONUMENTAL</em>
+    </h2>
+    <p style="color:var(--ink-secondary);max-width:54ch;margin:0 auto;font-size:1.1rem;font-weight:300;" class="reveal" style="--delay:0.18s">
+      Direct access to our senior engineering partners. Guaranteed response and preliminary constructability assessment within 24 hours.
+    </p>
+
+    <form class="cta-form reveal" style="--delay:0.25s" id="quoteForm" onsubmit="event.preventDefault(); showThankYouModal();">
+      <input type="email" placeholder="Enter corporate email..." class="cta-input" required id="userEmail">
+      <button type="submit" class="btn-primary" style="padding:1.1rem 2.2rem;">
+        Initialize Project Dossier <span>→</span>
+      </button>
+    </form>
+    <p style="font-size:0.75rem;color:var(--ink-muted);margin-top:1.2rem;letter-spacing:0.1em;text-transform:uppercase;">
+      CONFIDENTIAL PRE-CONSTRUCTION APPRAISAL // NON-DISCLOSURE GUARANTEED
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="#hero" class="brand">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 22V9l10-7 10 7v13"/><path d="M9 22V12h6v10"/>
+        </svg>
+        <span>STRUCTURA</span>
+      </a>
+      <p>
+        Building the global skyline with unyielding engineering standards. Licensed, bonded, and insured in 22 North American states and 4 European jurisdictions.
+      </p>
+    </div>
+
+    <div class="footer-col">
+      <h4>Capabilities</h4>
+      <ul>
+        <li><a href="#services">Commercial High-Rise</a></li>
+        <li><a href="#services">Industrial Warehousing</a></li>
+        <li><a href="#services">Civil Works &amp; Bridges</a></li>
+        <li><a href="#services">Mass Timber Construction</a></li>
+        <li><a href="#services">Seismic Retrofitting</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#about">About Structura</a></li>
+        <li><a href="#projects">Project Archive</a></li>
+        <li><a href="#process">Safety &amp; Compliance</a></li>
+        <li><a href="#estimator">Cost Engine</a></li>
+        <li><a href="#contact">Careers &amp; Bids</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Headquarters</h4>
+      <ul>
+        <li><a href="mailto:bids@structura.build">bids@structura.build</a></li>
+        <li><a href="tel:+18005558900">+1 (800) 555-8900</a></li>
+        <li><span style="color:var(--ink-secondary);">1400 Steelworks Plaza, Suite 4400<br>Chicago, IL 60601</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span>&copy; 2025 STRUCTURA ENGINEERING &amp; CONSTRUCTION GROUP. ALL RIGHTS RESERVED.</span>
+    <span>CONTRACTOR LICENSE #CA-984421-B // HEAVY CIVIL CLASS A</span>
+  </div>
+</footer>
+
+<!-- ============================================================
+     INTERACTIVE PROJECT / SERVICE DOSSIER MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="infoModal">
+  <div class="modal-window">
+    <button class="modal-close" id="modalClose">&times;</button>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent);margin-bottom:0.8rem;" id="modalSubtitle">
+      TECHNICAL SPECIFICATION DOSSIER
+    </div>
+    <h3 class="font-display" style="font-size:2.2rem;margin-bottom:1.2rem;" id="modalTitle">
+      Commercial High-Rise Division
+    </h3>
+    <p style="color:var(--ink-secondary);line-height:1.7;margin-bottom:1.5rem;" id="modalBody">
+      STRUCTURA's commercial skyscraper division specializes in high-density urban infill developments. Utilizing advanced wind-tunnel aerodynamic modeling, jump-form core systems, and self-climbing crane technologies, we routinely achieve 3-day floor cycles while maintaining strict vibration control.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;background:var(--bg-secondary);padding:1.2rem;border:1px solid var(--grid-line);margin-bottom:1.5rem;">
+      <div>
+        <span style="font-size:0.65rem;color:var(--ink-muted);text-transform:uppercase;">Core Methodology</span>
+        <strong style="display:block;font-size:0.9rem;font-family:'Space Grotesk';">Slipform Concrete Core + Steel Outriggers</strong>
+      </div>
+      <div>
+        <span style="font-size:0.65rem;color:var(--ink-muted);text-transform:uppercase;">Certification Standard</span>
+        <strong style="display:block;font-size:0.9rem;font-family:'Space Grotesk';">LEED Platinum &amp; WELL Gold Ready</strong>
+      </div>
+    </div>
+    <a href="#contact" class="btn-primary" style="width:100%;" onclick="closeModal()">
+      Discuss This Typology With An Engineer <span>→</span>
+    </a>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT: FULL SCROLL ANIMATIONS, PARALLAX, CANVAS & LOGIC
+     ============================================================ -->
+<script>
+(function(){
+  'use strict';
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $  = function(s, ctx){ return (ctx || document).querySelector(s); };
+  var $$ = function(s, ctx){ return Array.prototype.slice.call((ctx || document).querySelectorAll(s)); };
+
+  /* ------------------------------------------------------------
+     1. CUSTOM CAD CURSOR LOGIC
+     ------------------------------------------------------------ */
+  var cadCursor = $('#cadCursor');
+  if (cadCursor && window.matchMedia('(pointer: fine)').matches && !reduceMotion) {
+    var mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+    var cursorX = mouseX, cursorY = mouseY;
+
+    window.addEventListener('mousemove', function(e){
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    }, { passive: true });
+
+    function renderCursor(){
+      cursorX += (mouseX - cursorX) * 0.22;
+      cursorY += (mouseY - cursorY) * 0.22;
+      cadCursor.style.transform = 'translate(' + cursorX.toFixed(1) + 'px,' + cursorY.toFixed(1) + 'px) translate(-50%,-50%)';
+      requestAnimationFrame(renderCursor);
+    }
+    requestAnimationFrame(renderCursor);
+
+    // Hover state on interactives
+    $$('a, button, input, .service-row, .project-card, .comparison-box').forEach(function(el){
+      el.addEventListener('mouseenter', function(){ cadCursor.classList.add('hover'); });
+      el.addEventListener('mouseleave', function(){ cadCursor.classList.remove('hover'); });
+    });
+  } else if (cadCursor) {
+    cadCursor.style.display = 'none';
+  }
+
+  /* ------------------------------------------------------------
+     2. HERO CANVAS: ARCHITECTURAL CRANE & CAD GRID
+     ------------------------------------------------------------ */
+  var canvas = $('#heroGridCanvas');
+  if (canvas && !reduceMotion) {
+    var ctx = canvas.getContext('2d');
+    var w, h;
+    var gridSpacing = 48;
+    var animFrame = 0;
+
+    function resizeCanvas(){
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = canvas.parentElement.offsetHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function drawGrid(){
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = 'rgba(255, 96, 16, 0.09)';
+      ctx.lineWidth = 1;
+
+      // Draw faint CAD coordinate grid
+      for (var x = 0; x < w; x += gridSpacing) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (var y = 0; y < h; y += gridSpacing) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      // Draw schematic crane jib line angled across background
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 96, 16, 0.25)';
+      ctx.lineWidth = 1.5;
+      var craneBaseX = w * 0.78;
+      var craneBaseY = h * 0.85;
+      var craneTipX = w * 0.35 + Math.sin(animFrame * 0.008) * 40;
+      var craneTipY = h * 0.18 + Math.cos(animFrame * 0.008) * 15;
+
+      // Mast
+      ctx.beginPath();
+      ctx.moveTo(craneBaseX, craneBaseY);
+      ctx.lineTo(craneBaseX, craneTipY);
+      ctx.stroke();
+
+      // Jib Boom
+      ctx.beginPath();
+      ctx.moveTo(craneBaseX + 60, craneTipY);
+      ctx.lineTo(craneTipX, craneTipY);
+      ctx.stroke();
+
+      // Hoist line
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = 'rgba(255, 190, 26, 0.35)';
+      ctx.beginPath();
+      ctx.moveTo(craneTipX + 60, craneTipY);
+      ctx.lineTo(craneTipX + 60, craneTipY + 120 + Math.sin(animFrame * 0.02) * 20);
+      ctx.stroke();
+      ctx.restore();
+
+      animFrame++;
+      requestAnimationFrame(drawGrid);
+    }
+    requestAnimationFrame(drawGrid);
+  }
+
+  /* ------------------------------------------------------------
+     3. INTERSECTION OBSERVER REVEALS
+     ------------------------------------------------------------ */
+  var reveals = $$('.reveal');
+  if ('IntersectionObserver' in window && !reduceMotion) {
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    reveals.forEach(function(el){ observer.observe(el); });
+  } else {
+    reveals.forEach(function(el){ el.classList.add('in-view'); });
+  }
+
+  /* ------------------------------------------------------------
+     4. INTERACTIVE ANIMATED NUMERIC COUNTERS
+     ------------------------------------------------------------ */
+  var countSpans = $$('[data-target]');
+  function runCounter(el){
+    var target = parseFloat(el.getAttribute('data-target')) || 0;
+    var duration = 1800;
+    var startTime = null;
+
+    function step(timestamp){
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 4);
+      var current = target * eased;
+      
+      if (target >= 100) {
+        el.textContent = Math.round(current).toLocaleString();
+      } else {
+        el.textContent = (target % 1 === 0) ? Math.round(current) : current.toFixed(2);
+      }
+
+      if (progress < 1) requestAnimationFrame(step);
+      else el.textContent = target.toLocaleString();
+    }
+    requestAnimationFrame(step);
+  }
+
+  if ('IntersectionObserver' in window && !reduceMotion) {
+    var counterObserver = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          runCounter(entry.target);
+          counterObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.4 });
+    countSpans.forEach(function(s){ counterObserver.observe(s); });
+  } else {
+    countSpans.forEach(function(s){ s.textContent = s.getAttribute('data-target'); });
+  }
+
+  /* ------------------------------------------------------------
+     5. HORIZONTAL PROJECTS PINNED SCROLL LOGIC
+     ------------------------------------------------------------ */
+  var projectsSection = $('#projects');
+  var projectsTrack   = $('#projectsTrack');
+  var horizontalDist  = 0;
+
+  function calculateHorizontal(){
+    if (!projectsSection || !projectsTrack) return;
+    if (window.innerWidth <= 900) {
+      projectsSection.style.height = '';
+      projectsTrack.style.transform = '';
+      horizontalDist = 0;
+      return;
+    }
+    horizontalDist = Math.max(0, projectsTrack.scrollWidth - window.innerWidth + 80);
+    projectsSection.style.height = (window.innerHeight + horizontalDist) + 'px';
+  }
+
+  /* ------------------------------------------------------------
+     6. UNIFIED SCROLL ANIMATIONS LOOP
+     ------------------------------------------------------------ */
+  var progressBar    = $('#progressBar');
+  var scrollPercent  = $('#scrollPercent');
+  var navbar         = $('#navbar');
+  var parallaxEls    = $$('[data-parallax]');
+  var processWrap    = $('#processWrap');
+  var processFill    = $('#processFill');
+  var isTicking      = false;
+
+  function clamp(val, min, max){ return Math.min(Math.max(val, min), max); }
+
+  function onScrollFrame(){
+    isTicking = false;
+    var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    var progress  = docHeight > 0 ? clamp(scrollTop / docHeight, 0, 1) : 0;
+
+    if (progressBar) progressBar.style.transform = 'scaleX(' + progress + ')';
+    if (scrollPercent) scrollPercent.textContent = Math.round(progress * 100) + '%';
+    if (navbar) navbar.classList.toggle('scrolled', scrollTop > 40);
+
+    if (reduceMotion) return;
+
+    var vh = window.innerHeight;
+    for (var i = 0; i < parallaxEls.length; i++) {
+      var pEl = parallaxEls[i];
+      var rect = pEl.getBoundingClientRect();
+      if (rect.bottom < -100 || rect.top > vh + 100) continue;
+      var speed = parseFloat(pEl.getAttribute('data-parallax')) || 0.15;
+      var offset = (rect.top + rect.height * 0.5 - vh * 0.5) * -speed;
+      pEl.style.transform = 'translate3d(0,' + offset.toFixed(1) + 'px,0)';
+    }
+
+    if (projectsSection && projectsTrack && horizontalDist > 0) {
+      var pRect = projectsSection.getBoundingClientRect();
+      var maxScroll = projectsSection.offsetHeight - vh;
+      var pProgress = maxScroll > 0 ? clamp(-pRect.top / maxScroll, 0, 1) : 0;
+      projectsTrack.style.transform = 'translate3d(' + (-pProgress * horizontalDist).toFixed(1) + 'px, 0, 0)';
+    }
+
+    if (processWrap && processFill) {
+      var sRect = processWrap.getBoundingClientRect();
+      var sProgress = clamp((vh * 0.72 - sRect.top) / sRect.height, 0, 1);
+      processFill.style.transform = 'scaleY(' + sProgress.toFixed(4) + ')';
+    }
+  }
+
+  function requestScrollUpdate(){
+    if (!isTicking) {
+      isTicking = true;
+      requestAnimationFrame(onScrollFrame);
+    }
+  }
+
+  window.addEventListener('scroll', requestScrollUpdate, { passive: true });
+  window.addEventListener('resize', function(){
+    calculateHorizontal();
+    requestScrollUpdate();
+  });
+
+  /* ------------------------------------------------------------
+     7. INTERACTIVE BEFORE & AFTER SLIDER
+     ------------------------------------------------------------ */
+  var compareBox    = $('#compareBox');
+  var compareAfter  = $('#compareAfter');
+  var compareHandle = $('#compareHandle');
+
+  if (compareBox && compareAfter && compareHandle) {
+    var isDragging = false;
+
+    function updateSliderPosition(clientX){
+      var rect = compareBox.getBoundingClientRect();
+      var offsetX = clientX - rect.left;
+      var percent = clamp((offsetX / rect.width) * 100, 2, 98);
+      
+      compareAfter.style.clipPath = 'polygon(0 0, ' + percent + '% 0, ' + percent + '% 100%, 0 100%)';
+      compareHandle.style.left = percent + '%';
+    }
+
+    compareBox.addEventListener('mousedown', function(e){
+      isDragging = true;
+      updateSliderPosition(e.clientX);
+    });
+
+    window.addEventListener('mousemove', function(e){
+      if (!isDragging) return;
+      updateSliderPosition(e.clientX);
+    }, { passive: true });
+
+    window.addEventListener('mouseup', function(){ isDragging = false; });
+
+    compareBox.addEventListener('touchstart', function(e){
+      if (e.touches.length > 0) updateSliderPosition(e.touches[0].clientX);
+    }, { passive: true });
+    compareBox.addEventListener('touchmove', function(e){
+      if (e.touches.length > 0) updateSliderPosition(e.touches[0].clientX);
+    }, { passive: true });
+  }
+
+  /* ------------------------------------------------------------
+     8. INTERACTIVE PROJECT FILTERING
+     ------------------------------------------------------------ */
+  var filterButtons = $$('.filter-btn');
+  var projectCards  = $$('.project-card');
+
+  filterButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      filterButtons.forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      var filter = btn.getAttribute('data-filter');
+
+      projectCards.forEach(function(card){
+        var cat = card.getAttribute('data-category');
+        if (filter === 'all' || cat === filter) {
+          card.style.display = 'block';
+          card.style.opacity = '1';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      calculateHorizontal();
+    });
+  });
+
+  /* ------------------------------------------------------------
+     9. INTERACTIVE CAPITAL COST ESTIMATOR ENGINE
+     ------------------------------------------------------------ */
+  var areaSlider    = $('#areaSlider');
+  var areaDisplay   = $('#areaDisplay');
+  var speedSlider   = $('#speedSlider');
+  var speedDisplay  = $('#speedDisplay');
+  var typeButtons   = $$('.type-btn');
+  var costOutput    = $('#costOutput');
+  var durationOutput= $('#durationOutput');
+  var crewOutput    = $('#crewOutput');
+  var steelOutput   = $('#steelOutput');
+  var concreteOutput= $('#concreteOutput');
+
+  var currentRate = 380;
+  var currentArea = 150000;
+  var speedMultiplier = 1.0;
+
+  typeButtons.forEach(function(b){
+    b.addEventListener('click', function(){
+      typeButtons.forEach(function(t){ t.classList.remove('active'); });
+      b.classList.add('active');
+      currentRate = parseFloat(b.getAttribute('data-rate')) || 380;
+      recalculateEstimator();
+    });
+  });
+
+  if (areaSlider && areaDisplay) {
+    areaSlider.addEventListener('input', function(){
+      currentArea = parseInt(areaSlider.value, 10);
+      areaDisplay.textContent = currentArea.toLocaleString() + ' SQ FT';
+      recalculateEstimator();
+    });
+  }
+
+  if (speedSlider && speedDisplay) {
+    speedSlider.addEventListener('input', function(){
+      var val = parseInt(speedSlider.value, 10);
+      if (val === 1) {
+        speedMultiplier = 0.92;
+        speedDisplay.textContent = 'Standard Paced Schedule';
+      } else if (val === 2) {
+        speedMultiplier = 1.0;
+        speedDisplay.textContent = 'Fast-Track (Optimized)';
+      } else {
+        speedMultiplier = 1.15;
+        speedDisplay.textContent = 'Aggressive Fast-Track (+15% Prem)';
+      }
+      recalculateEstimator();
+    });
+  }
+
+  function recalculateEstimator(){
+    var baseCost = currentArea * currentRate * speedMultiplier;
+    var lowEstimate  = (baseCost * 0.94) / 1000000;
+    var highEstimate = (baseCost * 1.08) / 1000000;
+    
+    costOutput.textContent = '$' + lowEstimate.toFixed(1) + 'M – $' + highEstimate.toFixed(1) + 'M';
+
+    var months = Math.round(14 + (currentArea / 40000) * (2 / speedMultiplier));
+    durationOutput.textContent = months + ' MONTHS';
+
+    var crew = Math.round(80 + (currentArea / 1200) * speedMultiplier);
+    crewOutput.textContent = Math.min(crew, 650) + ' TRADES';
+
+    var steelTons = Math.round(currentArea * 0.028);
+    steelOutput.textContent = steelTons.toLocaleString() + ' TONS';
+
+    var concreteYards = Math.round(currentArea * 0.12);
+    concreteOutput.textContent = concreteYards.toLocaleString() + ' CU YD';
+  }
+  recalculateEstimator();
+
+  /* ------------------------------------------------------------
+     10. PROJECT DOSSIER MODAL WINDOW
+     ------------------------------------------------------------ */
+  var infoModal     = $('#infoModal');
+  var modalClose    = $('#modalClose');
+  var modalTitle    = $('#modalTitle');
+  var modalSubtitle = $('#modalSubtitle');
+  var modalBody     = $('#modalBody');
+
+  window.openModal = function(title, subtitle, bodyText){
+    if (modalTitle) modalTitle.textContent = title;
+    if (modalSubtitle) modalSubtitle.textContent = subtitle;
+    if (modalBody) modalBody.textContent = bodyText;
+    if (infoModal) infoModal.classList.add('active');
+  };
+
+  window.closeModal = function(){
+    if (infoModal) infoModal.classList.remove('active');
+  };
+
+  if (modalClose) modalClose.addEventListener('click', closeModal);
+  if (infoModal) {
+    infoModal.addEventListener('click', function(e){
+      if (e.target === infoModal) closeModal();
+    });
+  }
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') closeModal();
+  });
+
+  $$('.service-row').forEach(function(row){
+    row.addEventListener('click', function(){
+      var name = $('.service-name', row).textContent;
+      var desc = $('.service-desc', row).textContent;
+      openModal(name, 'CORE DISCIPLINE DOSSIER', desc + ' Our engineering division self-performs all primary structural components with live laser verification.');
+    });
+  });
+
+  $$('.project-card').forEach(function(card){
+    card.addEventListener('click', function(){
+      var title = card.getAttribute('data-title') || 'Masterwork';
+      var cost = card.getAttribute('data-cost');
+      var area = card.getAttribute('data-area');
+      var city = card.getAttribute('data-city');
+      openModal(title, 'PROJECT ARCHIVE // ' + city, 'Delivered at ' + cost + ' comprising ' + area + ' of prime structural space. Completed ahead of schedule with zero reportable safety lost-time incidents.');
+    });
+  });
+
+  window.showThankYouModal = function(){
+    var email = $('#userEmail').value;
+    openModal('Dossier Transmitted', 'PRE-CONSTRUCTION DESK CONFIRMED', 'Thank you. An engineering principal will review your site requirements and contact ' + email + ' within 24 hours with preliminary constructability modeling.');
+  };
+
+  /* ------------------------------------------------------------
+     11. OPTIONAL WEB AUDIO API TACTILE CLICKS
+     ------------------------------------------------------------ */
+  var soundEnabled = false;
+  var audioCtx = null;
+  var soundToggle = $('#soundToggle');
+  var soundIcon   = $('#soundIcon');
+  var soundLabel  = $('#soundLabel');
+
+  function playTone(freq, type, duration){
+    if (!soundEnabled) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq || 440, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    } catch(err){}
+  }
+
+  if (soundToggle) {
+    soundToggle.addEventListener('click', function(){
+      soundEnabled = !soundEnabled;
+      if (soundEnabled) {
+        soundIcon.textContent = '🔊';
+        soundLabel.textContent = 'SOUND: ACTIVE';
+        playTone(520, 'triangle', 0.12);
+      } else {
+        soundIcon.textContent = '🔇';
+        soundLabel.textContent = 'SOUND: MUTED';
+      }
+    });
+  }
+
+  $$('.btn-primary, .btn-outline, .type-btn, .filter-btn').forEach(function(b){
+    b.addEventListener('click', function(){ playTone(640, 'triangle', 0.08); });
+  });
+
+  /* ------------------------------------------------------------
+     12. MOBILE NAVIGATION CONTROLLER
+     ------------------------------------------------------------ */
+  var mobileToggle = $('#mobileToggle');
+  var mobileNav    = $('#mobileNav');
+
+  function toggleMobileMenu(){
+    var isOpen = document.body.classList.toggle('menu-open');
+    if (mobileToggle) mobileToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  }
+
+  if (mobileToggle) mobileToggle.addEventListener('click', toggleMobileMenu);
+  $$('.mobile-link', mobileNav).forEach(function(link){
+    link.addEventListener('click', function(){
+      document.body.classList.remove('menu-open');
+      if (mobileToggle) mobileToggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  /* ------------------------------------------------------------
+     13. INITIAL BOOTSTRAP
+     ------------------------------------------------------------ */
+  function boot(){
+    calculateHorizontal();
+    requestScrollUpdate();
+  }
+
+  window.addEventListener('load', boot);
+  if (document.readyState === 'complete') boot();
+  else window.addEventListener('DOMContentLoaded', boot);
+
+  setTimeout(boot, 800);
+  setTimeout(boot, 2400);
+
+})();
+</script>
+</body>
+</html>
